@@ -1,3 +1,21 @@
+<a name="v0.9.1"></a>
+## v0.9.1 (2019-12-10)
+
+
+#### Features
+
+*   continuous integration with automatic releases ([f2cfc7b9](https://github.com/clog-tool/clog-lib/commit/f2cfc7b9e74960d6607ab77a8f255662b92e548b))
+*   Implement component aliases ([997f561c](https://github.com/clog-tool/clog-lib/commit/997f561c8ff4ddca52c72e4ba30d819eba2b52b5), closes [#21](https://github.com/clog-tool/clog-lib/issues/21))
+*   keep constant section order ([ee3858fc](https://github.com/clog-tool/clog-lib/commit/ee3858fcc2458f45c93500c0adaae81ae6de065f))
+*   add cgit link style ([0df12c85](https://github.com/clog-tool/clog-lib/commit/0df12c8513cfe324016ca802ca62e91d393a9832), closes [#10](https://github.com/clog-tool/clog-lib/issues/10))
+
+#### Bug Fixes
+
+*   Make parse_raw_commit public ([387d5024](https://github.com/clog-tool/clog-lib/commit/387d502460d353db520ed99a59c373d168c0e411))
+*   support ':' character in scope names ([a8914d33](https://github.com/clog-tool/clog-lib/commit/a8914d33a6bb90561cf2015ff106f1b4c05af076))
+
+
+
 <a name="0.9.0"></a>
 ## 0.9.0 (2015-10-25)
 
