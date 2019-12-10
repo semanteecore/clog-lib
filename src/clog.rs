@@ -73,7 +73,9 @@ pub struct Clog {
     pub breaks_regex: Regex,
     pub breaking_regex: Regex,
     /// The format to output the changelog in (Defaults to Markdown)
-    pub out_format: ChangelogFormat
+    pub out_format: ChangelogFormat,
+    /// Whether to output date or not
+    pub date: bool
 }
 
 impl fmt::Debug for Clog {
@@ -100,7 +102,8 @@ impl fmt::Debug for Clog {
             closes_regex: {:?}
             breaks_regex: {:?}
             breaking_regex: {:?}
-            out_format: {:?}
+            out_format: {:?},
+            date: {:?}
         }}",
             self.grep,
             self.format,
@@ -122,6 +125,7 @@ impl fmt::Debug for Clog {
             self.breaks_regex,
             self.breaking_regex,
             self.out_format,
+            self.date,
         )
     }
 }
@@ -170,7 +174,8 @@ impl Clog {
             regex: regex!(r"^([^:\(]+?)(?:\(([^\)]*?)?\))?:(.*)"),
             closes_regex: regex!(r"(?:Closes|Fixes|Resolves)\s((?:#(\d+)(?:,\s)?)+)"),
             breaks_regex: regex!(r"(?:Breaks|Broke)\s((?:#(\d+)(?:,\s)?)+)"),
-            breaking_regex: regex!(r"(?i:breaking)")
+            breaking_regex: regex!(r"(?i:breaking)"),
+            date: true
         }
     }
 
@@ -541,6 +546,25 @@ impl Clog {
     /// ```
     pub fn output_format(&mut self, f: ChangelogFormat) -> &mut Clog {
         self.out_format = f;
+        self
+    }
+
+    /// Whether to output date in the changelog file or not.
+    ///
+    /// `true` by default.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use clog::Clog;
+    /// let mut clog = Clog::new().unwrap_or_else(|e| {
+    ///     e.exit();
+    /// });
+    ///
+    /// clog.date(false);
+    /// ```
+    pub fn date(&mut self, d: bool) -> &mut Clog {
+        self.date = d;
         self
     }
 
