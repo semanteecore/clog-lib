@@ -1,8 +1,6 @@
 use std::collections::BTreeMap;
 use std::io;
 
-use time;
-
 use crate::clog::Clog;
 use crate::error::Error;
 use crate::fmt::{FormatWriter, WriterResult};
@@ -72,19 +70,17 @@ impl<'a> MarkdownWriter<'a> {
             format!("## {}{}", options.version, subtitle)
         };
 
-        let date = time::now_utc();
+        write!(
+            self.0,
+            "<a name=\"{}\"></a>\n{}",
+            options.version, version_text
+        )?;
 
-        match date.strftime("%Y-%m-%d") {
-            Ok(date) => write!(
-                self.0,
-                "<a name=\"{}\"></a>\n{} ({})\n\n",
-                options.version, version_text, date
-            ),
-            Err(_) => write!(
-                self.0,
-                "<a name=\"{}\"></a>\n{} ({})\n\n",
-                options.version, version_text, "XXXX-XX-XX"
-            )
+        if options.date {
+            let date = chrono::Utc::today();
+            write!(self.0, "({})\n\n", date.format("%Y-%m-%d"))
+        } else {
+            write!(self.0, "\n\n")
         }
     }
 
