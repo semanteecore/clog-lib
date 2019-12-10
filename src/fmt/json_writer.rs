@@ -1,8 +1,6 @@
 use std::collections::BTreeMap;
 use std::io;
 
-use time;
-
 use crate::clog::Clog;
 use crate::error::Error;
 use crate::fmt::{FormatWriter, WriterResult};
@@ -75,12 +73,12 @@ impl<'a> JsonWriter<'a> {
             }
         )?;
 
-        let date = time::now_utc();
-
-        match date.strftime("%Y-%m-%d") {
-            Ok(date) => write!(self.0, "\"date\":\"{}\"}},", date),
-            Err(_) => write!(self.0, "\"date\":null}},",)
+        if options.date {
+            let date = chrono::Utc::today();
+            write!(self.0, "\"date\":\"{}\"}},", date.format("%Y-%m-%d"))?;
         }
+
+        Ok(())
     }
 
     /// Writes a particular section of a changelog

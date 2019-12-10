@@ -14,7 +14,7 @@ edition = "2018"
 [dependencies]
 indexmap = "1"
 regex = "1"
-time = "0.1"
+chrono = "0.4"
 
 [features]
 default = []
