@@ -4,9 +4,9 @@ pub use self::md_writer::MarkdownWriter;
 mod json_writer;
 mod md_writer;
 
-use clog::Clog;
-use error::Error;
-use sectionmap::SectionMap;
+use crate::clog::Clog;
+use crate::error::Error;
+use crate::sectionmap::SectionMap;
 
 clog_enum! {
     #[derive(Debug)]

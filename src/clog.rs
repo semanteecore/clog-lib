@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::convert::AsRef;
-use std::env;
 use std::fmt;
 use std::fs::File;
 use std::io::{stdout, BufWriter, Read, Write};
@@ -9,15 +8,12 @@ use std::process::Command;
 
 use indexmap::IndexMap;
 use regex::Regex;
-use toml::{Parser, Value};
 
-use error::Error;
-use fmt::{ChangelogFormat, FormatWriter, JsonWriter, MarkdownWriter, WriterResult};
-use git::{Commit, Commits};
-use link_style::LinkStyle;
-use sectionmap::SectionMap;
-
-use CLOG_CONFIG_FILE;
+use crate::error::Error;
+use crate::fmt::{ChangelogFormat, FormatWriter, JsonWriter, MarkdownWriter, WriterResult};
+use crate::git::{Commit, Commits};
+use crate::link_style::LinkStyle;
+use crate::sectionmap::SectionMap;
 
 /// Convienience type for returning results of building a `Clog` struct
 ///
@@ -193,56 +189,7 @@ impl Clog {
     pub fn new() -> BuilderResult {
         debugln!("Creating default clog with new()");
         debugln!("Trying default config file");
-        Clog::from_file(CLOG_CONFIG_FILE)
-    }
-
-    /// Creates a `Clog` struct using a specific git working directory and project directory as
-    /// well as a custom named TOML configuration file.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use clog::Clog;
-    /// let clog = Clog::with_all("/myproject/.git",
-    ///                           "/myproject",
-    ///                           "/myproject/clog_conf.toml").unwrap_or_else(|e| {
-    ///     e.exit();
-    /// });
-    /// ```
-    pub fn with_all<P: AsRef<Path>>(git_dir: P, work_tree: P, cfg_file: P) -> BuilderResult {
-        debugln!(
-            "Creating clog with \n\tgit_dir: {:?}\n\twork_tree: {:?}\n\tcfg_file: {:?}",
-            git_dir.as_ref(),
-            work_tree.as_ref(),
-            cfg_file.as_ref()
-        );
-        let clog = try!(Clog::with_dirs(git_dir, work_tree));
-        clog.try_config_file(cfg_file.as_ref())
-    }
-
-    /// Creates a `Clog` struct using a specific git working directory OR project directory as
-    /// well as a custom named TOML configuration file.
-    ///
-    /// **NOTE:** If you specify a `.git` folder the parent will be used as the working tree, and
-    /// vice versa.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use clog::Clog;
-    /// let clog = Clog::with_dir_and_file("/myproject",
-    ///                           "/myproject/clog_conf.toml").unwrap_or_else(|e| {
-    ///     e.exit();
-    /// });
-    /// ```
-    pub fn with_dir_and_file<P: AsRef<Path>>(dir: P, cfg_file: P) -> BuilderResult {
-        debugln!(
-            "Creating clog with \n\tdir: {:?}\n\tcfg_file: {:?}",
-            dir.as_ref(),
-            cfg_file.as_ref()
-        );
-        let clog = try!(Clog::_with_dir(dir));
-        clog.try_config_file(cfg_file.as_ref())
+        Ok(Clog::_new())
     }
 
     fn _with_dir<P: AsRef<Path>>(dir: P) -> BuilderResult {
@@ -282,8 +229,8 @@ impl Clog {
     /// ```
     pub fn with_dir<P: AsRef<Path>>(dir: P) -> BuilderResult {
         debugln!("Creating clog with \n\tdir: {:?}", dir.as_ref());
-        let clog = try!(Clog::_with_dir(dir));
-        clog.try_config_file(Path::new(CLOG_CONFIG_FILE))
+        let clog = Clog::_with_dir(dir)?;
+        Ok(clog)
     }
 
     /// Creates a `Clog` struct using a specific git working directory AND a project directory.
@@ -309,196 +256,7 @@ impl Clog {
         let mut clog = Clog::_new();
         clog.git_dir = Some(git_dir.as_ref().to_path_buf());
         clog.git_work_tree = Some(work_tree.as_ref().to_path_buf());
-        clog.try_config_file(Path::new(CLOG_CONFIG_FILE))
-    }
-
-    /// Creates a `Clog` struct a custom named TOML configuration file. Sets the parent directory
-    /// of the configuration file to the working tree and sibling `.git` directory as the git
-    /// directory.
-    ///
-    /// **NOTE:** If you specify a `.git` folder the parent will be used as the working tree, and
-    /// vice versa.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use clog::Clog;
-    /// let clog = Clog::from_file("/myproject/clog_conf.toml").unwrap_or_else(|e| {
-    ///     e.exit();
-    /// });
-    /// ```
-    pub fn from_file<P: AsRef<Path>>(file: P) -> BuilderResult {
-        debugln!("Creating clog with \n\tfile: {:?}", file.as_ref());
-        // Determine if the cfg_file was relative or not
-        let cfg_file = if file.as_ref().is_relative() {
-            debugln!("file is relative");
-            let cwd = match env::current_dir() {
-                Ok(d) => d,
-                Err(..) => return Err(Error::CurrentDirErr)
-            };
-            Path::new(&cwd).join(file.as_ref())
-        } else {
-            debugln!("file is absolute");
-            file.as_ref().to_path_buf()
-        };
-
-        // We assume whatever dir the .clog.toml file is also contains the git metadata
-        let mut dir = cfg_file.clone();
-        dir.pop();
-        Clog::with_dir_and_file(dir, cfg_file)
-    }
-
-    // Try and create a clog object from a config file
-    fn try_config_file(mut self, cfg_file: &Path) -> BuilderResult {
-        debugln!("Trying to use config file: {:?}", cfg_file);
-        let mut toml_from_latest = None;
-        let mut toml_repo = None;
-        let mut toml_subtitle = None;
-        let mut toml_link_style = None;
-        let mut toml_outfile = None;
-        let mut toml_infile = None;
-        let mut toml_changelog = None;
-        let mut toml_format = None;
-
-        if let Ok(ref mut toml_f) = File::open(cfg_file) {
-            debugln!("Found file");
-            let mut toml_s = String::with_capacity(100);
-
-            if let Err(..) = toml_f.read_to_string(&mut toml_s) {
-                return Err(Error::TomlReadErr);
-            }
-
-            toml_s.shrink_to_fit();
-
-            let mut toml = Parser::new(&toml_s[..]);
-
-            let toml_table = match toml.parse() {
-                Some(table) => table,
-                None => {
-                    return Err(Error::ConfigParseErr);
-                }
-            };
-
-            let clog_table = match toml_table.get("clog") {
-                Some(table) => table,
-                None => {
-                    return Err(Error::ConfigFormatErr);
-                }
-            };
-
-            toml_from_latest = clog_table
-                .lookup("from-latest-tag")
-                .unwrap_or(&Value::Boolean(false))
-                .as_bool();
-            toml_repo = match clog_table.lookup("repository") {
-                Some(val) => Some(val.as_str().unwrap_or("").to_owned()),
-                None => Some("".to_owned())
-            };
-            toml_subtitle = match clog_table.lookup("subtitle") {
-                Some(val) => Some(val.as_str().unwrap_or("").to_owned()),
-                None => Some("".to_owned())
-            };
-            toml_link_style = match clog_table.lookup("link-style") {
-                Some(val) => match val.as_str().unwrap_or("github").parse::<LinkStyle>() {
-                    Ok(style) => Some(style),
-                    Err(..) => {
-                        return Err(Error::LinkStyleErr);
-                    }
-                },
-                None => Some(LinkStyle::Github)
-            };
-            toml_outfile = match clog_table.lookup("outfile") {
-                Some(val) => Some(val.as_str().unwrap_or("").to_owned()),
-                None => None
-            };
-            toml_infile = match clog_table.lookup("infile") {
-                Some(val) => Some(val.as_str().unwrap_or("").to_owned()),
-                None => None
-            };
-            toml_changelog = match clog_table.lookup("changelog") {
-                Some(val) => Some(val.as_str().unwrap_or("").to_owned()),
-                None => None
-            };
-            toml_format = match clog_table.lookup("output-format") {
-                Some(val) => Some(val.as_str().unwrap_or("").to_owned()),
-                None => None
-            };
-            match toml_table.get("sections") {
-                Some(table) => match table.as_table() {
-                    Some(table) => {
-                        for (sec, val) in table.iter() {
-                            if let Some(vec) = val.as_slice() {
-                                let alias_vec = vec
-                                    .iter()
-                                    .map(|v| v.as_str().unwrap_or("").to_owned())
-                                    .collect::<Vec<_>>();
-                                self.section_map.insert(sec.to_owned(), alias_vec);
-                            }
-                        }
-                    }
-                    None => ()
-                },
-                None => ()
-            };
-            match toml_table.get("components") {
-                Some(table) => match table.as_table() {
-                    Some(table) => {
-                        for (comp, val) in table.iter() {
-                            if let Some(vec) = val.as_slice() {
-                                let alias_vec = vec
-                                    .iter()
-                                    .map(|v| v.as_str().unwrap_or("").to_owned())
-                                    .collect::<Vec<_>>();
-                                self.component_map.insert(comp.to_owned(), alias_vec);
-                            }
-                        }
-                    }
-                    None => ()
-                },
-                None => ()
-            };
-        } else {
-            debugln!("File didn't exist");
-        };
-
-        if toml_from_latest.unwrap_or(false) {
-            self.from = self.get_latest_tag();
-        }
-
-        if let Some(repo) = toml_repo {
-            self.repo = repo;
-        }
-
-        if let Some(ls) = toml_link_style {
-            self.link_style = ls;
-        }
-
-        if let Some(subtitle) = toml_subtitle {
-            self.subtitle = subtitle;
-        }
-
-        if let Some(outfile) = toml_outfile {
-            self.outfile = Some(outfile);
-        }
-
-        if let Some(infile) = toml_infile {
-            self.infile = Some(infile);
-        }
-
-        if let Some(format) = toml_format {
-            match format.parse::<ChangelogFormat>() {
-                Ok(val) => self.out_format = val,
-                Err(..) => return Err(Error::ConfigFormatErr)
-            }
-        }
-
-        if let Some(ref cl) = toml_changelog {
-            self.outfile = Some(cl.to_owned());
-            self.infile = Some(cl.to_owned());
-        }
-
-        debugln!("Returning clog:\n{:?}", self);
-        Ok(self)
+        Ok(clog)
     }
 
     /// Sets the grep search pattern for finding commits.
@@ -831,19 +589,21 @@ impl Clog {
         let (subject, component, commit_type) =
             match lines.next().and_then(|s| self.regex.captures(s)) {
                 Some(caps) => {
-                    let commit_type = self.section_for(caps.at(1).unwrap_or("")).to_owned();
-                    let component = caps.at(2).map(|component| {
-                        match self.component_for(component) {
+                    let commit_type = self
+                        .section_for(caps.get(1).map(|m| m.as_str()).unwrap_or(""))
+                        .to_owned();
+                    let component = caps.get(2).map(|component| {
+                        match self.component_for(component.as_str()) {
                             Some(alias) => alias.clone(),
-                            None => component.to_owned()
+                            None => component.as_str().to_owned()
                         }
                         .to_owned()
                     });
-                    let subject = caps.at(3);
+                    let subject = caps.get(3).map(|m| m.as_str().to_owned());
                     (subject, component, commit_type)
                 }
                 None => (
-                    Some(""),
+                    Some("".to_owned()),
                     Some("".to_owned()),
                     self.section_for("unk").clone()
                 )
@@ -852,13 +612,13 @@ impl Clog {
         let mut breaks = vec![];
         for line in lines {
             if let Some(caps) = self.closes_regex.captures(line) {
-                if let Some(cap) = caps.at(2) {
-                    closes.push(cap.to_owned());
+                if let Some(cap) = caps.get(2) {
+                    closes.push(cap.as_str().to_owned());
                 }
             }
             if let Some(caps) = self.breaks_regex.captures(line) {
-                if let Some(cap) = caps.at(2) {
-                    breaks.push(cap.to_owned());
+                if let Some(cap) = caps.get(2) {
+                    breaks.push(cap.as_str().to_owned());
                 }
             } else if self.breaking_regex.captures(line).is_some() {
                 breaks.push("".to_owned());
@@ -866,12 +626,12 @@ impl Clog {
         }
 
         Commit {
-            hash: hash,
+            hash,
             subject: subject.unwrap().to_owned(),
             component: component.unwrap_or("".to_string()).to_owned(),
-            closes: closes,
-            breaks: breaks,
-            commit_type: commit_type
+            closes,
+            breaks,
+            commit_type
         }
     }
 
@@ -1109,11 +869,11 @@ impl Clog {
                 match self.out_format {
                     ChangelogFormat::Markdown => {
                         let mut writer = MarkdownWriter::new(&mut file);
-                        try!(self.write_changelog_with(&mut writer));
+                        self.write_changelog_with(&mut writer)?;
                     }
                     ChangelogFormat::Json => {
                         let mut writer = JsonWriter::new(&mut file);
-                        try!(self.write_changelog_with(&mut writer));
+                        self.write_changelog_with(&mut writer)?;
                     }
                 }
             }
@@ -1159,11 +919,11 @@ impl Clog {
                     match self.out_format {
                         ChangelogFormat::Markdown => {
                             let mut writer = MarkdownWriter::new(&mut file);
-                            try!(self.write_changelog_with(&mut writer));
+                            self.write_changelog_with(&mut writer)?;
                         }
                         ChangelogFormat::Json => {
                             let mut writer = JsonWriter::new(&mut file);
-                            try!(self.write_changelog_with(&mut writer));
+                            self.write_changelog_with(&mut writer)?;
                         }
                     }
                 }
@@ -1182,11 +942,11 @@ impl Clog {
                 match self.out_format {
                     ChangelogFormat::Markdown => {
                         let mut writer = MarkdownWriter::new(&mut out_buf);
-                        try!(self.write_changelog_with(&mut writer));
+                        self.write_changelog_with(&mut writer)?;
                     }
                     ChangelogFormat::Json => {
                         let mut writer = JsonWriter::new(&mut out_buf);
-                        try!(self.write_changelog_with(&mut writer));
+                        self.write_changelog_with(&mut writer)?;
                     }
                 }
             }
@@ -1230,7 +990,7 @@ impl Clog {
         debugln!("Writing changelog from writer");
         let sm = SectionMap::from_commits(self.get_commits());
 
-        try!(writer.write_changelog(self, &sm));
+        writer.write_changelog(self, &sm)?;
 
         Ok(())
     }

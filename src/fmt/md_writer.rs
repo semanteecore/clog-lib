@@ -3,11 +3,11 @@ use std::io;
 
 use time;
 
-use clog::Clog;
-use error::Error;
-use fmt::{FormatWriter, WriterResult};
-use git::Commit;
-use sectionmap::SectionMap;
+use crate::clog::Clog;
+use crate::error::Error;
+use crate::fmt::{FormatWriter, WriterResult};
+use crate::git::Commit;
+use crate::sectionmap::SectionMap;
 
 /// Wraps a `std::io::Write` object to write `clog` output in a Markdown format
 ///
@@ -36,7 +36,7 @@ use sectionmap::SectionMap;
 ///     e.exit();
 /// });
 /// ```
-pub struct MarkdownWriter<'a>(&'a mut io::Write);
+pub struct MarkdownWriter<'a>(&'a mut dyn io::Write);
 
 impl<'a> MarkdownWriter<'a> {
     /// Creates a new instance of the `MarkdownWriter` struct using a `std::io::Write` object.
@@ -186,7 +186,7 @@ impl<'a> MarkdownWriter<'a> {
     /// Writes some contents to the `Write` writer object
     #[allow(dead_code)]
     fn write(&mut self, content: &str) -> io::Result<()> {
-        try!(write!(self.0, "\n\n\n"));
+        write!(self.0, "\n\n\n")?;
         write!(self.0, "{}", content)
     }
 }
@@ -203,11 +203,11 @@ impl<'a> FormatWriter for MarkdownWriter<'a> {
             .keys()
             .filter_map(|sec| sm.sections.get(sec).map(|secmap| (sec, secmap)));
         for (sec, secmap) in s_it {
-            try!(self.write_section(
+            self.write_section(
                 options,
                 &sec[..],
                 &secmap.iter().collect::<BTreeMap<_, _>>()
-            ));
+            )?;
         }
 
         self.0.flush().unwrap();
