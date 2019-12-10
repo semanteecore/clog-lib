@@ -1,3 +1,15 @@
+<a name="v0.9.2"></a>
+## v0.9.2 (2019-12-10)
+
+
+#### Features
+
+*   optionally skip date in changelogs ([31962f8c](https://github.com/clog-tool/clog-lib/commit/31962f8c7cc97073641b22d3fd03461764da9d6f))
+*   upgrade dependencies ([9d685066](https://github.com/clog-tool/clog-lib/commit/9d68506627ac44fa3e39f7d816ab33d629b851fb))
+*   update to Rust 2018 ([e0e6939b](https://github.com/clog-tool/clog-lib/commit/e0e6939b02d98a0b7db91ed44bc603111ea12351))
+
+
+
 <a name="0.9.0"></a>
 ## 0.9.0 (2015-10-25)
 
