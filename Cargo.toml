@@ -8,6 +8,7 @@ version = "0.9.1"
 authors = ["Christoph Burgdorf <christoph.burgdorf@bvsn.org>"]
 description = "A conventional changelog for the rest of us"
 exclude = ["docs/*"]
+publish = false
 
 [dependencies]
 indexmap = "1.0.1"
