@@ -3,7 +3,6 @@ git = "builtin"
 clog = "builtin"
 github = "builtin"
 rust = "builtin"
-docker = "builtin"
 
 [steps]
 pre_flight = "discover"
