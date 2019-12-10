@@ -2,10 +2,10 @@ version: 2
 
 aliases:
   - &restore-deps-cache-ubuntu
-    key: rust-cache-{{ arch }}-{{ checksum "Cargo.lock" }}-{{ .Environment.CIRCLE_JOB }}
+    key: rust-cache-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ .Environment.CIRCLE_JOB }}
 
   - &save-deps-cache-ubuntu
-    key: rust-cache-{{ arch }}-{{ checksum "Cargo.lock" }}-{{ .Environment.CIRCLE_JOB }}
+    key: rust-cache-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ .Environment.CIRCLE_JOB }}
     paths:
       - /usr/local/cargo/registry
       - /usr/local/rustup
