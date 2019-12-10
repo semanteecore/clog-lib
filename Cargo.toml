@@ -9,6 +9,7 @@ authors = ["Christoph Burgdorf <christoph.burgdorf@bvsn.org>"]
 description = "A conventional changelog for the rest of us"
 exclude = ["docs/*"]
 publish = false
+edition = "2018"
 
 [dependencies]
 indexmap = "1.0.1"

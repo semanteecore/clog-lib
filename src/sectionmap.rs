@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 
-use git::Commit;
+use crate::git::Commit;
 
 /// The second level of the changelog, i.e. the components -> commit information
 pub type ComponentMap = BTreeMap<String, Vec<Commit>>;

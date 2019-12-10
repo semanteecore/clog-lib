@@ -3,11 +3,11 @@ use std::io;
 
 use time;
 
-use clog::Clog;
-use error::Error;
-use fmt::{FormatWriter, WriterResult};
-use git::Commit;
-use sectionmap::SectionMap;
+use crate::clog::Clog;
+use crate::error::Error;
+use crate::fmt::{FormatWriter, WriterResult};
+use crate::git::Commit;
+use crate::sectionmap::SectionMap;
 
 /// Wraps a `std::io::Write` object to write `clog` output in a JSON format
 ///
@@ -36,7 +36,7 @@ use sectionmap::SectionMap;
 ///     e.exit();
 /// });
 /// ```
-pub struct JsonWriter<'a>(&'a mut io::Write);
+pub struct JsonWriter<'a>(&'a mut dyn io::Write);
 
 impl<'a> JsonWriter<'a> {
     /// Creates a new instance of the `JsonWriter` struct using a `std::io::Write` object.
@@ -64,7 +64,7 @@ impl<'a> JsonWriter<'a> {
 impl<'a> JsonWriter<'a> {
     /// Writes the initial header inforamtion for a release
     fn write_header(&mut self, options: &Clog) -> io::Result<()> {
-        try!(write!(
+        write!(
             self.0,
             "\"header\":{{\"version\":{:?},\"patch_version\":{:?},\"subtitle\":{},",
             options.version,
@@ -73,7 +73,7 @@ impl<'a> JsonWriter<'a> {
                 0 => "null".to_owned(),
                 _ => format!("{:?}", &*options.subtitle)
             }
-        ));
+        )?;
 
         let date = time::now_utc();
 
@@ -207,7 +207,7 @@ impl<'a> FormatWriter for JsonWriter<'a> {
                 debugln!("Writing section: {}", &*sec);
                 write!(self.0, "{{\"title\":{:?},", &*sec).unwrap();
 
-                try!(self.write_section(options, &compmap.iter().collect::<BTreeMap<_, _>>()));
+                self.write_section(options, &compmap.iter().collect::<BTreeMap<_, _>>())?;
 
                 write!(self.0, "}}").unwrap();
                 if s_it.peek().is_some() {

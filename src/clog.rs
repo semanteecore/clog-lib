@@ -11,13 +11,13 @@ use indexmap::IndexMap;
 use regex::Regex;
 use toml::{Parser, Value};
 
-use error::Error;
-use fmt::{ChangelogFormat, FormatWriter, JsonWriter, MarkdownWriter, WriterResult};
-use git::{Commit, Commits};
-use link_style::LinkStyle;
-use sectionmap::SectionMap;
+use crate::error::Error;
+use crate::fmt::{ChangelogFormat, FormatWriter, JsonWriter, MarkdownWriter, WriterResult};
+use crate::git::{Commit, Commits};
+use crate::link_style::LinkStyle;
+use crate::sectionmap::SectionMap;
 
-use CLOG_CONFIG_FILE;
+use crate::CLOG_CONFIG_FILE;
 
 /// Convienience type for returning results of building a `Clog` struct
 ///
@@ -216,7 +216,7 @@ impl Clog {
             work_tree.as_ref(),
             cfg_file.as_ref()
         );
-        let clog = try!(Clog::with_dirs(git_dir, work_tree));
+        let clog = Clog::with_dirs(git_dir, work_tree)?;
         clog.try_config_file(cfg_file.as_ref())
     }
 
@@ -241,7 +241,7 @@ impl Clog {
             dir.as_ref(),
             cfg_file.as_ref()
         );
-        let clog = try!(Clog::_with_dir(dir));
+        let clog = Clog::_with_dir(dir)?;
         clog.try_config_file(cfg_file.as_ref())
     }
 
@@ -282,7 +282,7 @@ impl Clog {
     /// ```
     pub fn with_dir<P: AsRef<Path>>(dir: P) -> BuilderResult {
         debugln!("Creating clog with \n\tdir: {:?}", dir.as_ref());
-        let clog = try!(Clog::_with_dir(dir));
+        let clog = Clog::_with_dir(dir)?;
         clog.try_config_file(Path::new(CLOG_CONFIG_FILE))
     }
 
@@ -1109,11 +1109,11 @@ impl Clog {
                 match self.out_format {
                     ChangelogFormat::Markdown => {
                         let mut writer = MarkdownWriter::new(&mut file);
-                        try!(self.write_changelog_with(&mut writer));
+                        self.write_changelog_with(&mut writer)?;
                     }
                     ChangelogFormat::Json => {
                         let mut writer = JsonWriter::new(&mut file);
-                        try!(self.write_changelog_with(&mut writer));
+                        self.write_changelog_with(&mut writer)?;
                     }
                 }
             }
@@ -1159,11 +1159,11 @@ impl Clog {
                     match self.out_format {
                         ChangelogFormat::Markdown => {
                             let mut writer = MarkdownWriter::new(&mut file);
-                            try!(self.write_changelog_with(&mut writer));
+                            self.write_changelog_with(&mut writer)?;
                         }
                         ChangelogFormat::Json => {
                             let mut writer = JsonWriter::new(&mut file);
-                            try!(self.write_changelog_with(&mut writer));
+                            self.write_changelog_with(&mut writer)?;
                         }
                     }
                 }
@@ -1182,11 +1182,11 @@ impl Clog {
                 match self.out_format {
                     ChangelogFormat::Markdown => {
                         let mut writer = MarkdownWriter::new(&mut out_buf);
-                        try!(self.write_changelog_with(&mut writer));
+                        self.write_changelog_with(&mut writer)?;
                     }
                     ChangelogFormat::Json => {
                         let mut writer = JsonWriter::new(&mut out_buf);
-                        try!(self.write_changelog_with(&mut writer));
+                        self.write_changelog_with(&mut writer)?;
                     }
                 }
             }
@@ -1230,7 +1230,7 @@ impl Clog {
         debugln!("Writing changelog from writer");
         let sm = SectionMap::from_commits(self.get_commits());
 
-        try!(writer.write_changelog(self, &sm));
+        writer.write_changelog(self, &sm)?;
 
         Ok(())
     }
