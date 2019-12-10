@@ -1,0 +1,63 @@
+version: 2
+
+aliases:
+  - &restore-deps-cache-ubuntu
+    key: rust-cache-{{ arch }}-{{ checksum "Cargo.lock" }}-{{ .Environment.CIRCLE_JOB }}
+
+  - &save-deps-cache-ubuntu
+    key: rust-cache-{{ arch }}-{{ checksum "Cargo.lock" }}-{{ .Environment.CIRCLE_JOB }}
+    paths:
+      - /usr/local/cargo/registry
+      - /usr/local/rustup
+      - ~/project/target/
+
+defaults: &defaults
+  working_directory: ~/project
+  environment:
+    RUST_BACKTRACE: 1
+
+jobs:
+  release-dry:
+    <<: *defaults
+    docker:
+      - image: semanteecore/semanteecore:latest
+    steps:
+      - setup_remote_docker
+      - checkout
+      - restore_cache: *restore-deps-cache-ubuntu
+      - run: semanteecore --dry
+      - save_cache: *save-deps-cache-ubuntu
+
+  release:
+    <<: *defaults
+    docker:
+      - image: semanteecore/semanteecore:latest
+    steps:
+      - setup_remote_docker
+      - checkout
+      - restore_cache: *restore-deps-cache-ubuntu
+      # This unset is VERY important: without it --force-https cannot work
+      # For some reason CircleCI has a global override substituting git@ links instead of all https links
+      - run: git config --global --unset url.ssh://git@github.com.insteadof
+      - run: semanteecore
+      - save_cache: *save-deps-cache-ubuntu
+
+workflows:
+  version: 2
+  ci:
+    jobs:
+      - release-dry:
+          filters:
+            branches:
+              ignore: master
+      - hold:
+          type: approval
+          filters:
+            branches:
+              only: master
+      - release:
+          filters:
+            branches:
+              only: master
+          requires:
+            - hold
