@@ -1,3 +1,14 @@
+<a name="v0.9.3"></a>
+## v0.9.3 (2019-12-10)
+
+
+#### Bug Fixes
+
+*   downgrade regex 1.3 -> 1.2 ([cbeb1db6](https://github.com/clog-tool/clog-lib/commit/cbeb1db691cb0029c3d0344f5e737fa8262c4b51))
+* **ci:**  enable prepare step on Rust plugin ([2d1b5129](https://github.com/clog-tool/clog-lib/commit/2d1b5129a0ec5da9c5de1444e36159d28a76f088))
+
+
+
 <a name="0.9.0"></a>
 ## 0.9.0 (2015-10-25)
 

@@ -1,24 +1,28 @@
 [package]
-repository = "https://github.com/clog-tool/clog-lib"
-readme = "README.md"
-keywords = ["git", "log", "changelog", "parser", "parse"]
-license = "MIT"
-name = "clog"
-version = "0.9.1"
-authors = ["Christoph Burgdorf <christoph.burgdorf@bvsn.org>"]
-description = "A conventional changelog for the rest of us"
-exclude = ["docs/*"]
+repository = 'https://github.com/clog-tool/clog-lib'
+readme = 'README.md'
+keywords = [
+    'git',
+    'log',
+    'changelog',
+    'parser',
+    'parse',
+]
+license = 'MIT'
+name = 'clog'
+version = '0.9.3'
+authors = ['Christoph Burgdorf <christoph.burgdorf@bvsn.org>']
+description = 'A conventional changelog for the rest of us'
+exclude = ['docs/*']
 publish = false
-edition = "2018"
+edition = '2018'
 
 [dependencies]
-indexmap = "1.3"
-regex = "1.2"
-time = "0.1"
+indexmap = '1.3'
+regex = '1.2'
+time = '0.1'
 
 [features]
 default = []
-
-# For debugging output
 debug = []
 unstable = []
