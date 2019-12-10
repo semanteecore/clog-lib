@@ -1,3 +1,17 @@
+<a name="v0.9.4"></a>
+## v0.9.4 (2019-12-10)
+
+
+#### Features
+
+*   switch from `time` (deprecated) to `chrono` ([864cc2e1](https://github.com/clog-tool/clog-lib/commit/864cc2e15389b4653f73cc0d92e2f33da5a52509))
+
+#### Bug Fixes
+
+*   use most major versions in Cargo.toml ([6597d74d](https://github.com/clog-tool/clog-lib/commit/6597d74d5d116ec284f76c8d4271b04f0438c62b))
+
+
+
 <a name="0.9.0"></a>
 ## 0.9.0 (2015-10-25)
 
