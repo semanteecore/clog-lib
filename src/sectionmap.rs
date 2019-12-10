@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use std::collections::BTreeMap;
+use std::collections::HashMap;
 
 use git::Commit;
 
@@ -47,11 +47,17 @@ impl SectionMap {
 
         for entry in commits {
             if !entry.breaks.is_empty() {
-                let comp_map = sm.sections.entry("Breaking Changes".to_owned()).or_insert(BTreeMap::new());
+                let comp_map = sm
+                    .sections
+                    .entry("Breaking Changes".to_owned())
+                    .or_insert(BTreeMap::new());
                 let sec_map = comp_map.entry(entry.component.clone()).or_insert(vec![]);
                 sec_map.push(entry.clone());
             }
-            let comp_map = sm.sections.entry(entry.commit_type.clone()).or_insert(BTreeMap::new());
+            let comp_map = sm
+                .sections
+                .entry(entry.commit_type.clone())
+                .or_insert(BTreeMap::new());
             let sec_map = comp_map.entry(entry.component.clone()).or_insert(vec![]);
             sec_map.push(entry);
         }

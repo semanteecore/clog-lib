@@ -52,7 +52,7 @@ impl Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            _ => write!(f, "{}", self.description()),
+            _ => write!(f, "{}", self.description())
         }
     }
 }
@@ -68,13 +68,13 @@ impl StdError for Error {
             Error::CreateFileErr => "cannot create output file",
             Error::WriteErr => "cannot write to output file or stream",
             Error::UnknownErr => "unknown fatal error",
-            Error::IoErr => "fatal i/o error with output file",
+            Error::IoErr => "fatal i/o error with output file"
         }
     }
 
     fn cause(&self) -> Option<&StdError> {
         match *self {
-            _ => None,
+            _ => None
         }
     }
 }

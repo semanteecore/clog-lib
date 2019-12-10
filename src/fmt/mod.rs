@@ -1,8 +1,8 @@
-pub use self::md_writer::MarkdownWriter;
 pub use self::json_writer::JsonWriter;
+pub use self::md_writer::MarkdownWriter;
 
-mod md_writer;
 mod json_writer;
+mod md_writer;
 
 use clog::Clog;
 use error::Error;
@@ -15,7 +15,6 @@ clog_enum! {
         Markdown
     }
 }
-
 
 /// Convienience type for returning results of writing a changelog with a `Clog` struct
 ///
