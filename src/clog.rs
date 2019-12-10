@@ -589,11 +589,13 @@ impl Clog {
         let (subject, component, commit_type) =
             match lines.next().and_then(|s| self.regex.captures(s)) {
                 Some(caps) => {
-                    let commit_type = self.section_for(caps.get(1).map(|m| m.as_str()).unwrap_or("")).to_owned();
+                    let commit_type = self
+                        .section_for(caps.get(1).map(|m| m.as_str()).unwrap_or(""))
+                        .to_owned();
                     let component = caps.get(2).map(|component| {
                         match self.component_for(component.as_str()) {
                             Some(alias) => alias.clone(),
-                            None => component.as_str().to_owned(),
+                            None => component.as_str().to_owned()
                         }
                         .to_owned()
                     });
